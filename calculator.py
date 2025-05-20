@@ -53,10 +53,6 @@ cases_total_n = (yearly_volume / su_factor_n) * 1000 if su_factor_n else 0
 items_total_c = cases_total_c * items_case_c
 items_total_n = cases_total_n * items_case_n
 
-st.write(cases_total_c)
-st.write(cases_total_n)
-st.write(items_total_c)
-st.write(items_total_n)
 
 
 # ================================================================== 3. TRANSPORTATION ====================================================================================
