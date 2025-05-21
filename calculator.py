@@ -134,7 +134,7 @@ try:
     truck_uk_weight_c = case_weight_c * cases_per_truck_current_uk
     truck_uk_weight_n = case_weight_n * cases_per_truck_new_uk
 except:  # You can specify a more specific exception if desire
-    st.info("Please fill in all inputs above before continuing")
+    st.write("")
 
 
 # ================================================================== 5. MATERIAL ====================================================================================
@@ -235,223 +235,227 @@ if on:
 # ================================================================== TRUCK CO2 EMISSIONS ====================================================================================
 
 st.header("CO2 Emissions", divider="red")
-with st.container(border=True):
-    st.subheader("🚚 Road")
-
-    try:
-        locations = [
-            "London", "Skelmersdale", "DHL Nordic Klippan", "PRL Dublin", "Sochaczew", "Hopi",
-            "Euskirchen", "Crailsheim", "Amiens", "Mechelen", "Luis Simoes Mato", "Pomezia",
-            "Mataro", "Stckhse Liscate", "Luis Simoes Cabanillas",
-            "Unilog Markopoulo Hellas", "Aspropyrgos Hellas", "Timisoara"
-        ]
-
-        data = {
-            "SMO": ["NE", "NE", "NE", "NE", "CE", "CE", "DACH", "DACH", "FBNL", "FBNL", "SE", "SE", "SE", "SE", "SEE"],
-            "Code": ["4856", "4101", "6788", "C447", "9120", "A752", "4830", "4853", "4106", "4108",
-                    "976", "4863", "5683", "8486", "B145"],
-            "DC": ["London DC", "Skelmersdale", "DHL NORDIC SVC CTR-KLIPPAN-PGI", "PRL LOGISTICS LTD-DUBLIN-PG IO",
-                "SOCHACZEW CEN DC-PL-PGIO", "HOPI DC-STRANCICE-PGIOSA", "EUSKIRCHEN PLANT-ENTREPRENUER",
-                "CRAILSHEIM PLANT-ENTREPRENEUR", "AMIENS PLANT", "MECHELEN DC", "LUIS SIMOES LOGISTICA-MATO-IO",
-                "POMEZIA PLANT-ENTREPRENUER", "EXEL DC MATARO FHC - ENT", "STCKHSE ITALIA DC-LISCATE-PGIO",
-                "UNILOG SA-MARKOPOULO-PG HELLAS"]
-        }
-
-        # Initialize session state
-        if "selected_dcs" not in st.session_state:
-            st.session_state.selected_dcs = []
-
-        # UI: simulate st.pills with multiselect
-        selection = st.pills(
-            "Select all applicable DC locations",
-            options=locations,
-            selection_mode="multi",
-            default=st.session_state.selected_dcs
-        )
-
-        df = pd.DataFrame(data)
-        popover2 = st.popover("ℹ️ Show DC SAP codes")
-        popover2.dataframe(df, hide_index=True)
-        # on2 = st.toggle("Show DC code library")
-        # if on2:
-        #     st.dataframe(df, hide_index=True)
-
-        # Update session state only if changed
-        if set(selection) != set(st.session_state.selected_dcs):
-            st.session_state.selected_dcs = selection
-
-        # Create DataFrame with editable MSU column
-        df_data = {
-            "DC": st.session_state.selected_dcs,
-            "MSU": [0] * len(st.session_state.selected_dcs)
-        }
-        df = pd.DataFrame(df_data)
-
-        st.write("Introduce the yearly MSU breakdown per DC")
-        # Show editable data table
-        edited_df = st.data_editor(
-            df,
-            use_container_width=True,
-            column_config={
-                "MSU": st.column_config.NumberColumn("MSU", step=0.01, format="%f"),
-            },
-            disabled=["DC"],
-            hide_index=True
-        )
-
-        total_msu = (edited_df["MSU"].sum())
-
-        progress_fraction = min(total_msu / yearly_volume, 1.0) if yearly_volume > 0 else 0
-
-        c1, c2 = st.columns([0.6, 0.4])
-        with c1:
-            # Show progress bar
-            progress_bar = st.progress(progress_fraction)
-        with c2:
-            # Optional: Show percent text
-            st.write(f":blue[{progress_fraction*100:.1f}%] of yearly volume [:blue[{yearly_volume:.2f} MSU]]")
-        if total_msu > yearly_volume:
-            st.error(f"⚠️ The sum of your MSU (:red[{total_msu:.1f}]) column should not exceed your total yearly volume (:red[{yearly_volume} MSU])")
-        elif total_msu == yearly_volume and total_msu != 0:
-            st.badge("The sum of your MSU column is exactly equal to your total yearly volume!", icon=":material/check:", color="green")
-    except:
-        st.info("Please fill in all inputs above before continuing")
-
-    if edited_df["MSU"].sum() == yearly_volume:
-        # =================================================== Current and New Combined ===================================================
+ 
+if "🚚 Road" in transport_modes:
+    with st.container(border=True):
+        st.subheader("🚚 Road")
         try:
-            if su_factor_c and su_factor_n and su_factor_c > 0 and su_factor_n > 0:
-                df_combined = edited_df[["DC", "MSU"]].copy()
+            locations = [
+                "London", "Skelmersdale", "DHL Nordic Klippan", "PRL Dublin", "Sochaczew", "Hopi",
+                "Euskirchen", "Crailsheim", "Amiens", "Mechelen", "Luis Simoes Mato", "Pomezia",
+                "Mataro", "Stckhse Liscate", "Luis Simoes Cabanillas",
+                "Unilog Markopoulo Hellas", "Aspropyrgos Hellas", "Timisoara"
+            ]
 
-                # Compute current scenario
-                df_combined["Cases_Current"] = (df_combined["MSU"] / su_factor_c) * 1000
+            data = {
+                "SMO": ["NE", "NE", "NE", "NE", "CE", "CE", "DACH", "DACH", "FBNL", "FBNL", "SE", "SE", "SE", "SE", "SEE"],
+                "Code": ["4856", "4101", "6788", "C447", "9120", "A752", "4830", "4853", "4106", "4108",
+                        "976", "4863", "5683", "8486", "B145"],
+                "DC": ["London DC", "Skelmersdale", "DHL NORDIC SVC CTR-KLIPPAN-PGI", "PRL LOGISTICS LTD-DUBLIN-PG IO",
+                    "SOCHACZEW CEN DC-PL-PGIO", "HOPI DC-STRANCICE-PGIOSA", "EUSKIRCHEN PLANT-ENTREPRENUER",
+                    "CRAILSHEIM PLANT-ENTREPRENEUR", "AMIENS PLANT", "MECHELEN DC", "LUIS SIMOES LOGISTICA-MATO-IO",
+                    "POMEZIA PLANT-ENTREPRENUER", "EXEL DC MATARO FHC - ENT", "STCKHSE ITALIA DC-LISCATE-PGIO",
+                    "UNILOG SA-MARKOPOULO-PG HELLAS"]
+            }
 
-                def trucks_and_weights_current(row):
-                    if row["DC"] in ["London", "Skelmersdale"]:
-                        divisor = cases_per_truck_current_uk if cases_per_truck_current_uk > 0 else 1
-                        weight_per_truck = truck_uk_weight_c
-                    else:
-                        divisor = cases_per_truck_current_eu if cases_per_truck_current_eu > 0 else 1
-                        weight_per_truck = truck_eu_weight_c
-                    trucks = row["Cases_Current"] / divisor
-                    weight_per_truck_tonnes = weight_per_truck / 1000
-                    total_weight = trucks * weight_per_truck_tonnes
-                    return pd.Series([trucks, total_weight])
+            # Initialize session state
+            if "selected_dcs" not in st.session_state:
+                st.session_state.selected_dcs = []
 
-                df_combined[["Trucks_Current", "Weight_Current [t]"]] = df_combined.apply(trucks_and_weights_current, axis=1)
+            # UI: simulate st.pills with multiselect
+            selection = st.pills(
+                "Select all applicable DC locations",
+                options=locations,
+                selection_mode="multi",
+                default=st.session_state.selected_dcs
+            )
 
-                # Compute new scenario
-                df_combined["Cases_New"] = (df_combined["MSU"] / su_factor_n) * 1000
+            df = pd.DataFrame(data)
+            popover2 = st.popover("ℹ️ Show DC SAP codes")
+            popover2.dataframe(df, hide_index=True)
+            # on2 = st.toggle("Show DC code library")
+            # if on2:
+            #     st.dataframe(df, hide_index=True)
 
-                def trucks_and_weights_new(row):
-                    if row["DC"] in ["London", "Skelmersdale"]:
-                        divisor = cases_per_truck_new_uk if cases_per_truck_new_uk > 0 else 1
-                        weight_per_truck = truck_uk_weight_n
-                    else:
-                        divisor = cases_per_truck_new_eu if cases_per_truck_new_eu > 0 else 1
-                        weight_per_truck = truck_eu_weight_n
-                    trucks = row["Cases_New"] / divisor
-                    weight_per_truck_tonnes = weight_per_truck / 1000
-                    total_weight = trucks * weight_per_truck_tonnes
-                    return pd.Series([trucks, total_weight])
+            # Update session state only if changed
+            if set(selection) != set(st.session_state.selected_dcs):
+                st.session_state.selected_dcs = selection
 
-                df_combined[["Trucks_New", "Weight_New [t]"]] = df_combined.apply(trucks_and_weights_new, axis=1)
+            # Create DataFrame with editable MSU column
+            df_data = {
+                "DC": st.session_state.selected_dcs,
+                "MSU": [0] * len(st.session_state.selected_dcs)
+            }
+            df = pd.DataFrame(df_data)
 
-                # Add editable CO2e columns
-                df_combined["Current CO2e"] = 0.0
-                df_combined["New CO2e"] = 0.0
+            st.write("Introduce the yearly MSU breakdown per DC")
+            # Show editable data table
+            edited_df = st.data_editor(
+                df,
+                use_container_width=True,
+                column_config={
+                    "MSU": st.column_config.NumberColumn("MSU", step=0.01, format="%f"),
+                },
+                disabled=["DC"],
+                hide_index=True
+            )
 
-                # Final table
-                df_display = df_combined[[
-                    "DC",
-                    "Weight_Current [t]",
-                    "Weight_New [t]",
-                    "Current CO2e",
-                    "New CO2e"
-                ]].copy()
+            total_msu = (edited_df["MSU"].sum())
 
-                st.write("")
-                st.markdown("Use [EcoTransit](https://emissioncalculator.ecotransit.world/) to fill in the **CO2e** values for both **current** and **new**.")
+            progress_fraction = min(total_msu / yearly_volume, 1.0) if yearly_volume > 0 else 0
 
-                popover_c = st.popover("ℹ️ Job aid")
-                popover_c.image("help_aid_co2.png", caption="EcoTransit Tool")
-
-                df_display = st.data_editor(
-                    df_display,
-                    use_container_width=True,
-                    hide_index=True,
-                    column_config={
-                        "Current CO2e": st.column_config.NumberColumn(
-                            "Current CO2e",
-                            help="From [EcoTransit](https://emissioncalculator.ecotransit.world/)",
-                            step=0.01,
-                            format="%.2f"
-                        ),
-                        "New CO2e": st.column_config.NumberColumn(
-                            "New CO2e",
-                            help="From [EcoTransit](https://emissioncalculator.ecotransit.world/)",
-                            step=0.01,
-                            format="%.2f"
-                        )
-                    },
-                    disabled=[col for col in df_display.columns if col not in ["Current CO2e", "New CO2e"]]
-                )
+            c1, c2 = st.columns([0.6, 0.4])
+            with c1:
+                # Show progress bar
+                progress_bar = st.progress(progress_fraction)
+            with c2:
+                # Optional: Show percent text
+                st.write(f":blue[{progress_fraction*100:.1f}%] of yearly volume [:blue[{yearly_volume:.2f} MSU]]")
+            if total_msu > yearly_volume:
+                st.error(f"⚠️ The sum of your MSU (:red[{total_msu:.1f}]) column should not exceed your total yearly volume (:red[{yearly_volume} MSU])")
+            elif total_msu == yearly_volume and total_msu != 0:
+                st.badge("The sum of your MSU column is exactly equal to your total yearly volume!", icon=":material/check:", color="green")
         except:
             st.info("Please fill in all inputs above before continuing")
 
-        # =============================================================== Savings =============================================================
-        try:
-            if su_factor_c and su_factor_n and su_factor_c > 0 and su_factor_n > 0:
-                total_trucks_current = df_combined["Trucks_Current"].sum()
-                total_trucks_new = df_combined["Trucks_New"].sum()
+        if edited_df["MSU"].sum() == yearly_volume:
+            # =================================================== Current and New Combined ===================================================
+            try:
+                if su_factor_c and su_factor_n and su_factor_c > 0 and su_factor_n > 0:
+                    df_combined = edited_df[["DC", "MSU"]].copy()
 
-                total_co2_current = df_display["Current CO2e"].sum()
-                total_co2_new = df_display["New CO2e"].sum()
+                    # Compute current scenario
+                    df_combined["Cases_Current"] = (df_combined["MSU"] / su_factor_c) * 1000
 
-                trucks_saved = total_trucks_current - total_trucks_new
-                co2_saved = total_co2_current - total_co2_new
+                    def trucks_and_weights_current(row):
+                        if row["DC"] in ["London", "Skelmersdale"]:
+                            divisor = cases_per_truck_current_uk if cases_per_truck_current_uk > 0 else 1
+                            weight_per_truck = truck_uk_weight_c
+                        else:
+                            divisor = cases_per_truck_current_eu if cases_per_truck_current_eu > 0 else 1
+                            weight_per_truck = truck_eu_weight_c
+                        trucks = row["Cases_Current"] / divisor
+                        weight_per_truck_tonnes = weight_per_truck / 1000
+                        total_weight = trucks * weight_per_truck_tonnes
+                        return pd.Series([trucks, total_weight])
 
-                trucks_pct_saved = (trucks_saved / total_trucks_current) * 100 if total_trucks_current > 0 else 0
-                co2_pct_saved = (co2_saved / total_co2_current) * 100 if total_co2_current > 0 else 0
+                    df_combined[["Trucks_Current", "Weight_Current [t]"]] = df_combined.apply(trucks_and_weights_current, axis=1)
 
-                savings_data = {
-                    "Trucks Saved": [int(trucks_saved)],
-                    "% Trucks Saved": [trucks_pct_saved],
-                    "CO2e Saved": [int(co2_saved)],
-                    "% CO2e Saved": [co2_pct_saved]
-                }
+                    # Compute new scenario
+                    df_combined["Cases_New"] = (df_combined["MSU"] / su_factor_n) * 1000
 
-                df_savings = pd.DataFrame(savings_data)
+                    def trucks_and_weights_new(row):
+                        if row["DC"] in ["London", "Skelmersdale"]:
+                            divisor = cases_per_truck_new_uk if cases_per_truck_new_uk > 0 else 1
+                            weight_per_truck = truck_uk_weight_n
+                        else:
+                            divisor = cases_per_truck_new_eu if cases_per_truck_new_eu > 0 else 1
+                            weight_per_truck = truck_eu_weight_n
+                        trucks = row["Cases_New"] / divisor
+                        weight_per_truck_tonnes = weight_per_truck / 1000
+                        total_weight = trucks * weight_per_truck_tonnes
+                        return pd.Series([trucks, total_weight])
 
-                def highlight_savings(val):
-                    if isinstance(val, (float, int)):
-                        if val > 0:
-                            return "background-color: #d4edda"  # light green
-                        elif val < 0:
-                            return "background-color: #f8d7da"  # light red
-                    return ""
+                    df_combined[["Trucks_New", "Weight_New [t]"]] = df_combined.apply(trucks_and_weights_new, axis=1)
 
-                styled_df = df_savings.style.applymap(
-                    highlight_savings,
-                    subset=["% Trucks Saved", "% CO2e Saved"]
-                ).format({
-                    "% Trucks Saved": "{:.1f}%",
-                    "% CO2e Saved": "{:.1f}%"
-                })
+                    # Add editable CO2e columns
+                    df_combined["Current CO2e"] = 0.0
+                    df_combined["New CO2e"] = 0.0
 
-                st.subheader("Savings")
-                st.dataframe(styled_df, use_container_width=True, hide_index=True)
-        except:
-            st.info("Please fill in all inputs above before continuing")
+                    # Final table
+                    df_display = df_combined[[
+                        "DC",
+                        "Weight_Current [t]",
+                        "Weight_New [t]",
+                        "Current CO2e",
+                        "New CO2e"
+                    ]].copy()
 
-    elif edited_df["MSU"].sum() < yearly_volume:
-        st.info("Please introduce all volumes for the selected DCs to continue")
+                    st.write("")
+                    st.markdown("Use [EcoTransit](https://emissioncalculator.ecotransit.world/) to fill in the **CO2e** values for both **current** and **new**.")
+
+                    popover_c = st.popover("ℹ️ Job aid")
+                    popover_c.image("help_aid_co2.png", caption="EcoTransit Tool")
+
+                    df_display = st.data_editor(
+                        df_display,
+                        use_container_width=True,
+                        hide_index=True,
+                        column_config={
+                            "Current CO2e": st.column_config.NumberColumn(
+                                "Current CO2e",
+                                help="From [EcoTransit](https://emissioncalculator.ecotransit.world/)",
+                                step=0.01,
+                                format="%.2f"
+                            ),
+                            "New CO2e": st.column_config.NumberColumn(
+                                "New CO2e",
+                                help="From [EcoTransit](https://emissioncalculator.ecotransit.world/)",
+                                step=0.01,
+                                format="%.2f"
+                            )
+                        },
+                        disabled=[col for col in df_display.columns if col not in ["Current CO2e", "New CO2e"]]
+                    )
+            except:
+                st.info("Please fill in all inputs above before continuing")
+
+            # =============================================================== Savings =============================================================
+            try:
+                if su_factor_c and su_factor_n and su_factor_c > 0 and su_factor_n > 0:
+                    total_trucks_current = df_combined["Trucks_Current"].sum()
+                    total_trucks_new = df_combined["Trucks_New"].sum()
+
+                    total_co2_current = df_display["Current CO2e"].sum()
+                    total_co2_new = df_display["New CO2e"].sum()
+
+                    trucks_saved = total_trucks_current - total_trucks_new
+                    co2_saved = total_co2_current - total_co2_new
+
+                    trucks_pct_saved = (trucks_saved / total_trucks_current) * 100 if total_trucks_current > 0 else 0
+                    co2_pct_saved = (co2_saved / total_co2_current) * 100 if total_co2_current > 0 else 0
+
+                    savings_data = {
+                        "Trucks Saved": [int(trucks_saved)],
+                        "% Trucks Saved": [trucks_pct_saved],
+                        "CO2e Saved": [int(co2_saved)],
+                        "% CO2e Saved": [co2_pct_saved]
+                    }
+
+                    df_savings = pd.DataFrame(savings_data)
+
+                    def highlight_savings(val):
+                        if isinstance(val, (float, int)):
+                            if val > 0:
+                                return "background-color: #d4edda"  # light green
+                            elif val < 0:
+                                return "background-color: #f8d7da"  # light red
+                        return ""
+
+                    styled_df = df_savings.style.applymap(
+                        highlight_savings,
+                        subset=["% Trucks Saved", "% CO2e Saved"]
+                    ).format({
+                        "% Trucks Saved": "{:.1f}%",
+                        "% CO2e Saved": "{:.1f}%"
+                    })
+
+                    st.subheader("Savings")
+                    st.dataframe(styled_df, use_container_width=True, hide_index=True)
+            except:
+                st.info("Please fill in all inputs above before continuing")
+
+        elif edited_df["MSU"].sum() < yearly_volume:
+            st.info("Please introduce all volumes for the selected DCs to continue")
+else:
+    st.info("Please fill in section 3️⃣ before continuing")
 
 # ============================================== SEA CO2 SAVINGS ===================================================================
-with st.container(border=True):
-    try:
-        if "🚢 Sea" in transport_modes:
-            st.subheader("🚢 Sea")
+
+if "🚢 Sea" in transport_modes:
+    with st.container(border=True):
+        st.subheader("🚢 Sea")
+        try:
             # Calculations
             containers_c = cases_total_c / cases_sea_c
             containers_n = cases_total_n / cases_sea_n
@@ -519,8 +523,10 @@ with st.container(border=True):
             st.dataframe(
                 savings_df.style.applymap(highlight_percentages, subset=["Containers Saved [%]", "CO2e Saved [%]"]), hide_index=True
             )
-    except:
-        st.info("Please fill in sea cases/container on section 3️⃣ before continuing")
+        except:
+            st.info("Please fill in all inputs above before continuing")
+        
+            
 
 # ============================== RESULTS SECTION ==============================
 
