@@ -448,7 +448,7 @@ if "🚚 Road" in transport_modes:
         elif edited_df["MSU"].sum() < yearly_volume:
             st.info("Please introduce all volumes for the selected DCs to continue")
 else:
-    st.info("Please fill in section 3️⃣ before continuing")
+    st.info("Please fill in all Initiative Master Data before continuing")
 
 # ============================================== SEA CO2 SAVINGS ===================================================================
 
