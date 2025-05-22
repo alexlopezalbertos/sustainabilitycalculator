@@ -531,113 +531,116 @@ if "🚢 Sea" in transport_modes:
 
 st.header("Results Export", divider="red")
 
-output = io.BytesIO()
-with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-    wb = writer.book  # workbook for formatting
+try:
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        wb = writer.book  # workbook for formatting
 
-    # Initiative Info
-    pd.DataFrame({
-        "CM": [cm],
-        "Initiative Name": [initiative_name],
-        "FPC Example": [fpc],
-        "Description": [initiative_description]
-    }).to_excel(writer, sheet_name="1. Initiative Info", index=False)
+        # Initiative Info
+        pd.DataFrame({
+            "CM": [cm],
+            "Initiative Name": [initiative_name],
+            "FPC Example": [fpc],
+            "Description": [initiative_description]
+        }).to_excel(writer, sheet_name="1. Initiative Info", index=False)
 
-    # Volumes
-    pd.DataFrame({
-        "Yearly Volume (MSU)": [yearly_volume],
-        "Current SU Factor": [su_factor_c],
-        "New SU Factor": [su_factor_n],
-        "Current Items/Case": [items_case_c],
-        "New Items/Case": [items_case_n],
-        "Total Current Cases": [cases_total_c],
-        "Total New Cases": [cases_total_n],
-        "Total Current Items": [items_total_c],
-        "Total New Items": [items_total_n]
-    }).to_excel(writer, sheet_name="2. Volumes", index=False)
+        # Volumes
+        pd.DataFrame({
+            "Yearly Volume (MSU)": [yearly_volume],
+            "Current SU Factor": [su_factor_c],
+            "New SU Factor": [su_factor_n],
+            "Current Items/Case": [items_case_c],
+            "New Items/Case": [items_case_n],
+            "Total Current Cases": [cases_total_c],
+            "Total New Cases": [cases_total_n],
+            "Total Current Items": [items_total_c],
+            "Total New Items": [items_total_n]
+        }).to_excel(writer, sheet_name="2. Volumes", index=False)
 
-    # Transportation
-    pd.DataFrame({
-        "Transport Modes": [", ".join(transport_modes)],
-        "EU Pallet Type (Current)": [pallet_type_eu_c],
-        "EU Pallet Type (New)": [pallet_type_eu_n],
-        "UK Pallet Type (Current)": [pallet_type_uk_c],
-        "UK Pallet Type (New)": [pallet_type_uk_n],
-        "Cases per Truck EU (Current)": [cases_per_truck_current_eu],
-        "Cases per Truck EU (New)": [cases_per_truck_new_eu],
-        "Cases per Truck UK (Current)": [cases_per_truck_current_uk],
-        "Cases per Truck UK (New)": [cases_per_truck_new_uk],
-        "Sea Cases/Container (Current)": [cases_sea_c if "🚢 Sea" in transport_modes else None],
-        "Sea Cases/Container (New)": [cases_sea_n if "🚢 Sea" in transport_modes else None]
-    }).to_excel(writer, sheet_name="3. Transportation", index=False)
+        # Transportation
+        pd.DataFrame({
+            "Transport Modes": [", ".join(transport_modes)],
+            "EU Pallet Type (Current)": [pallet_type_eu_c if "🚚 Road" in transport_modes else None],
+            "EU Pallet Type (New)": [pallet_type_eu_n if "🚚 Road" in transport_modes else None],
+            "UK Pallet Type (Current)": [pallet_type_uk_c if "🚚 Road" in transport_modes else None],
+            "UK Pallet Type (New)": [pallet_type_uk_n if "🚚 Road" in transport_modes else None],
+            "Cases per Truck EU (Current)": [cases_per_truck_current_eu if "🚚 Road" in transport_modes else None],
+            "Cases per Truck EU (New)": [cases_per_truck_new_eu if "🚚 Road" in transport_modes else None],
+            "Cases per Truck UK (Current)": [cases_per_truck_current_uk if "🚚 Road" in transport_modes else None],
+            "Cases per Truck UK (New)": [cases_per_truck_new_uk if "🚚 Road" in transport_modes else None],
+            "Sea Cases/Container (Current)": [cases_sea_c if "🚢 Sea" in transport_modes else None],
+            "Sea Cases/Container (New)": [cases_sea_n if "🚢 Sea" in transport_modes else None]
+        }).to_excel(writer, sheet_name="3. Transportation", index=False)
 
-    # Weights
-    pd.DataFrame({
-        "Case Weight (Current)": [case_weight_c],
-        "Case Weight (New)": [case_weight_n],
-        "Truck EU Weight (Current)": [truck_eu_weight_c],
-        "Truck EU Weight (New)": [truck_eu_weight_n],
-        "Truck UK Weight (Current)": [truck_uk_weight_c],
-        "Truck UK Weight (New)": [truck_uk_weight_n]
-    }).to_excel(writer, sheet_name="4. Weights", index=False)
+        # Weights
+        pd.DataFrame({
+            "Case Weight (Current)": [case_weight_c],
+            "Case Weight (New)": [case_weight_n],
+            "Truck EU Weight (Current)": [truck_eu_weight_c if "🚚 Road" in transport_modes else None],
+            "Truck EU Weight (New)": [truck_eu_weight_n if "🚚 Road" in transport_modes else None],
+            "Truck UK Weight (Current)": [truck_uk_weight_c if "🚚 Road" in transport_modes else None],
+            "Truck UK Weight (New)": [truck_uk_weight_n if "🚚 Road" in transport_modes else None]
+        }).to_excel(writer, sheet_name="4. Weights", index=False)
 
-    # Material Savings with conditional formatting
-    if material_data:
-        material_rows = []
-        for material, (current_kg, new_kg) in material_data.items():
-            current_t = current_kg / 1000
-            new_t = new_kg / 1000
-            saving_pct = ((current_kg - new_kg) / current_kg * 100) if current_kg else 0
-            material_rows.append({
-                "Material": material,
-                "Current [t]": round(current_t, 2),
-                "New [t]": round(new_t, 2),
-                "Saving [%]": round(saving_pct, 2)
-            })
-        df_mat = pd.DataFrame(material_rows)
-        df_mat.to_excel(writer, sheet_name="5. Material Savings", index=False)
-        ws = writer.sheets["5. Material Savings"]
-        col_letter = chr(65 + df_mat.columns.get_loc("Saving [%]"))
-        rng = f"{col_letter}2:{col_letter}{len(df_mat)+1}"
-        ws.conditional_format(rng, {"type": "cell", "criteria": ">", "value": 0,
-                                    "format": wb.add_format({"bg_color": "#d4edda"})})
-        ws.conditional_format(rng, {"type": "cell", "criteria": "<", "value": 0,
-                                    "format": wb.add_format({"bg_color": "#f8d7da"})})
+        # Material Savings with conditional formatting
+        if material_data:
+            material_rows = []
+            for material, (current_kg, new_kg) in material_data.items():
+                current_t = current_kg / 1000
+                new_t = new_kg / 1000
+                saving_pct = ((current_kg - new_kg) / current_kg * 100) if current_kg else 0
+                material_rows.append({
+                    "Material": material,
+                    "Current [t]": round(current_t, 2),
+                    "New [t]": round(new_t, 2),
+                    "Saving [%]": round(saving_pct, 2)
+                })
+            df_mat = pd.DataFrame(material_rows)
+            df_mat.to_excel(writer, sheet_name="5. Material Savings", index=False)
+            ws = writer.sheets["5. Material Savings"]
+            col_letter = chr(65 + df_mat.columns.get_loc("Saving [%]"))
+            rng = f"{col_letter}2:{col_letter}{len(df_mat)+1}"
+            ws.conditional_format(rng, {"type": "cell", "criteria": ">", "value": 0,
+                                        "format": wb.add_format({"bg_color": "#d4edda"})})
+            ws.conditional_format(rng, {"type": "cell", "criteria": "<", "value": 0,
+                                        "format": wb.add_format({"bg_color": "#f8d7da"})})
 
-    # Road CO2 tables
-    try:
-        df_display.to_excel(writer, sheet_name="Road CO2", index=False)
-        df_savings.to_excel(writer, sheet_name="Road CO2 Savings", index=False)
-        ws2 = writer.sheets["Road CO2 Savings"]
-        for col in ["% Trucks Saved", "% CO2e Saved"]:
-            col_letter = chr(65 + df_savings.columns.get_loc(col))
-            rng = f"{col_letter}2:{col_letter}{len(df_savings)+1}"
-            ws2.conditional_format(rng, {"type": "cell", "criteria": ">", "value": 0,
-                                            "format": wb.add_format({"bg_color": "#d4edda"})})
-            ws2.conditional_format(rng, {"type": "cell", "criteria": "<", "value": 0,
-                                            "format": wb.add_format({"bg_color": "#f8d7da"})})
-    except:
-        pass
+        # Road CO2 tables
+        try:
+            df_display.to_excel(writer, sheet_name="Road CO2", index=False)
+            df_savings.to_excel(writer, sheet_name="Road CO2 Savings", index=False)
+            ws2 = writer.sheets["Road CO2 Savings"]
+            for col in ["% Trucks Saved", "% CO2e Saved"]:
+                col_letter = chr(65 + df_savings.columns.get_loc(col))
+                rng = f"{col_letter}2:{col_letter}{len(df_savings)+1}"
+                ws2.conditional_format(rng, {"type": "cell", "criteria": ">", "value": 0,
+                                                "format": wb.add_format({"bg_color": "#d4edda"})})
+                ws2.conditional_format(rng, {"type": "cell", "criteria": "<", "value": 0,
+                                                "format": wb.add_format({"bg_color": "#f8d7da"})})
+        except:
+            pass
 
-    # Sea CO2 tables
-    try:
-        edited_df.to_excel(writer, sheet_name="Sea CO2", index=False)
-        savings_df.to_excel(writer, sheet_name="Sea CO2 Savings", index=False)
-        ws3 = writer.sheets["Sea CO2 Savings"]
-        for col in ["Containers Saved [%]", "CO2e Saved [%]"]:
-            col_letter = chr(65 + savings_df.columns.get_loc(col))
-            rng = f"{col_letter}2:{col_letter}{len(savings_df)+1}"
-            ws3.conditional_format(rng, {"type": "cell", "criteria": ">", "value": 0,
-                                            "format": wb.add_format({"bg_color": "#d4edda"})})
-            ws3.conditional_format(rng, {"type": "cell", "criteria": "<", "value": 0,
-                                            "format": wb.add_format({"bg_color": "#f8d7da"})})
-    except:
-        pass
+        # Sea CO2 tables
+        try:
+            edited_df.to_excel(writer, sheet_name="Sea CO2", index=False)
+            savings_df.to_excel(writer, sheet_name="Sea CO2 Savings", index=False)
+            ws3 = writer.sheets["Sea CO2 Savings"]
+            for col in ["Containers Saved [%]", "CO2e Saved [%]"]:
+                col_letter = chr(65 + savings_df.columns.get_loc(col))
+                rng = f"{col_letter}2:{col_letter}{len(savings_df)+1}"
+                ws3.conditional_format(rng, {"type": "cell", "criteria": ">", "value": 0,
+                                                "format": wb.add_format({"bg_color": "#d4edda"})})
+                ws3.conditional_format(rng, {"type": "cell", "criteria": "<", "value": 0,
+                                                "format": wb.add_format({"bg_color": "#f8d7da"})})
+        except:
+            pass
 
-st.download_button(
-    label="📄 Download Excel Report",
-    data=output.getvalue(),
-    file_name=f"{initiative_name}_sustainability_report.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    on_click=st.balloons 
-)
+    st.download_button(
+        label="📄 Download Excel Report",
+        data=output.getvalue(),
+        file_name=f"{initiative_name}_sustainability_report.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        on_click=st.balloons 
+    )
+except:
+    st.info("Please complete the exercise before generating the report")
