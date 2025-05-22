@@ -314,7 +314,7 @@ if "🚚 Road" in transport_modes:
             if total_msu > yearly_volume:
                 st.error(f"⚠️ The sum of your MSU (:red[{total_msu:.1f}]) column should not exceed your total yearly volume (:red[{yearly_volume} MSU])")
             elif total_msu == yearly_volume and total_msu != 0:
-                st.badge("The sum of your MSU column is exactly equal to your total yearly volume!", icon=":material/check:", color="green")
+                st.badge("Sum of MSU per DC = Total yearly MSU", icon=":material/check:", color="green")
         except:
             st.info("Please fill in all inputs above before continuing")
 
@@ -339,7 +339,7 @@ if "🚚 Road" in transport_modes:
                         total_weight = trucks * weight_per_truck_tonnes
                         return pd.Series([trucks, total_weight])
 
-                    df_combined[["Trucks_Current", "Weight_Current [t]"]] = df_combined.apply(trucks_and_weights_current, axis=1)
+                    df_combined[["Trucks_Current", "Weight Current [t]"]] = df_combined.apply(trucks_and_weights_current, axis=1)
 
                     # Compute new scenario
                     df_combined["Cases_New"] = (df_combined["MSU"] / su_factor_n) * 1000
@@ -356,19 +356,19 @@ if "🚚 Road" in transport_modes:
                         total_weight = trucks * weight_per_truck_tonnes
                         return pd.Series([trucks, total_weight])
 
-                    df_combined[["Trucks_New", "Weight_New [t]"]] = df_combined.apply(trucks_and_weights_new, axis=1)
+                    df_combined[["Trucks_New", "Weight New [t]"]] = df_combined.apply(trucks_and_weights_new, axis=1)
 
                     # Add editable CO2e columns
-                    df_combined["Current CO2e"] = 0.0
-                    df_combined["New CO2e"] = 0.0
+                    df_combined["Current CO2e [kg]"] = 0.0
+                    df_combined["New CO2e [kg]"] = 0.0
 
                     # Final table
                     df_display = df_combined[[
                         "DC",
-                        "Weight_Current [t]",
-                        "Weight_New [t]",
-                        "Current CO2e",
-                        "New CO2e"
+                        "Weight Current [t]",
+                        "Weight New [t]",
+                        "Current CO2e [kg]",
+                        "New CO2e [kg]"
                     ]].copy()
 
                     st.write("")
@@ -382,20 +382,20 @@ if "🚚 Road" in transport_modes:
                         use_container_width=True,
                         hide_index=True,
                         column_config={
-                            "Current CO2e": st.column_config.NumberColumn(
-                                "Current CO2e",
+                            "Current CO2e [kg]": st.column_config.NumberColumn(
+                                "Current CO2e [kg]",
                                 help="From [EcoTransit](https://emissioncalculator.ecotransit.world/)",
                                 step=0.01,
                                 format="%.2f"
                             ),
-                            "New CO2e": st.column_config.NumberColumn(
-                                "New CO2e",
+                            "New CO2e [kg]": st.column_config.NumberColumn(
+                                "New CO2e [kg]",
                                 help="From [EcoTransit](https://emissioncalculator.ecotransit.world/)",
                                 step=0.01,
                                 format="%.2f"
                             )
                         },
-                        disabled=[col for col in df_display.columns if col not in ["Current CO2e", "New CO2e"]]
+                        disabled=[col for col in df_display.columns if col not in ["Current CO2e [kg]", "New CO2e [kg]"]]
                     )
             except:
                 st.info("Please fill in all inputs above before continuing")
@@ -406,8 +406,8 @@ if "🚚 Road" in transport_modes:
                     total_trucks_current = df_combined["Trucks_Current"].sum()
                     total_trucks_new = df_combined["Trucks_New"].sum()
 
-                    total_co2_current = df_display["Current CO2e"].sum()
-                    total_co2_new = df_display["New CO2e"].sum()
+                    total_co2_current = df_display["Current CO2e [kg]"].sum()
+                    total_co2_new = df_display["New CO2e [kg]"].sum()
 
                     trucks_saved = total_trucks_current - total_trucks_new
                     co2_saved = total_co2_current - total_co2_new
@@ -417,9 +417,9 @@ if "🚚 Road" in transport_modes:
 
                     savings_data = {
                         "Trucks Saved": [int(trucks_saved)],
-                        "% Trucks Saved": [trucks_pct_saved],
-                        "CO2e Saved": [int(co2_saved)],
-                        "% CO2e Saved": [co2_pct_saved]
+                        "Trucks Saved [%]": [trucks_pct_saved],
+                        "CO2e Saved [kg]": [int(co2_saved)],
+                        "CO2e Saved [%]": [co2_pct_saved]
                     }
 
                     df_savings = pd.DataFrame(savings_data)
@@ -434,10 +434,10 @@ if "🚚 Road" in transport_modes:
 
                     styled_df = df_savings.style.applymap(
                         highlight_savings,
-                        subset=["% Trucks Saved", "% CO2e Saved"]
+                        subset=["Trucks Saved [%]", "CO2e Saved [%]"]
                     ).format({
-                        "% Trucks Saved": "{:.1f}%",
-                        "% CO2e Saved": "{:.1f}%"
+                        "Trucks Saved [%]": "{:.1f}%",
+                        "CO2e Saved [%]": "{:.1f}%"
                     })
 
                     st.subheader("Savings")
@@ -473,28 +473,28 @@ if "🚢 Sea" in transport_modes:
 
             # Comparison table (only CO2e columns editable)
             combined_df = pd.DataFrame({
-                "Container Weight [t] Current": [weight_tonnes_c],
-                "Container Weight [t] New": [weight_tonnes_n],
-                "CO2e [kg] Current": [0],
-                "CO2e [kg] New": [0]
+                "Container Weight Current [t]": [weight_tonnes_c],
+                "Container Weight New [t]": [weight_tonnes_n],
+                "CO2e Current [kg]": [0],
+                "CO2e New [kg]": [0]
             })
 
             st.markdown("Use [EcoTransit](https://emissioncalculator.ecotransit.world/) to fill in the **CO2e** values for both **current** and **new**.")
             edited_df = st.data_editor(
                 combined_df,
                 column_config={
-                    "Container Weight [t] Current": st.column_config.Column(disabled=True),
-                    "Container Weight [t] New": st.column_config.Column(disabled=True),
-                    "CO2e [kg] Current": st.column_config.Column(),
-                    "CO2e [kg] New": st.column_config.Column(),
+                    "Container Weight Current [t]": st.column_config.Column(disabled=True),
+                    "Container Weight New [t]": st.column_config.Column(disabled=True),
+                    "CO2e Current [kg]": st.column_config.Column(),
+                    "CO2e New [kg]": st.column_config.Column(),
                 },
                 num_rows="fixed",
                 hide_index=True
             )
 
             # Compute savings if CO2 values were edited
-            co2_current = edited_df["CO2e [kg] Current"][0]
-            co2_new = edited_df["CO2e [kg] New"][0]
+            co2_current = edited_df["CO2e Current [kg]"][0]
+            co2_new = edited_df["CO2e New [kg]"][0]
             co2_saving = co2_current - co2_new
             co2_saving_percentage = 100 * co2_saving / co2_current if co2_current else 0
 
@@ -526,111 +526,118 @@ if "🚢 Sea" in transport_modes:
         except:
             st.info("Please fill in all inputs above before continuing")
         
-            
 
-# ============================== RESULTS SECTION ==============================
+# ============================================= FINAL DOWNLOAD SECTION =====================================================
 
-st.header("Results", divider="red")
+st.header("Results Export", divider="red")
 
-try:
-    def generate_report():
-        report_data = {}
+output = io.BytesIO()
+with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+    wb = writer.book  # workbook for formatting
 
-        # Base Data
-        report_data["Base Data"] = {
-            "CM": cm,
-            "Initiative Name": initiative_name,
-            "FPC Number": fpc,
-            "Initiative Description": initiative_description,
-            "Yearly Volume (MSU)": yearly_volume,
-            "Current SU factor": su_factor_c,
-            "New SU factor": su_factor_n,
-            "Current Items/Case": items_case_c,
-            "New Items/Case": items_case_n
-        }
+    # Initiative Info
+    pd.DataFrame({
+        "CM": [cm],
+        "Initiative Name": [initiative_name],
+        "FPC Example": [fpc],
+        "Description": [initiative_description]
+    }).to_excel(writer, sheet_name="1. Initiative Info", index=False)
 
-        # Transportation data
-        report_data["Transportation"] = {
-            "Transport Modes": transport_modes
-        }
-        if "🚢 Sea" in transport_modes:
-            report_data["Transportation"].update({
-                "Current Cases/Container (Sea)": cases_sea_c,
-                "New Cases/Container (Sea)": cases_sea_n
+    # Volumes
+    pd.DataFrame({
+        "Yearly Volume (MSU)": [yearly_volume],
+        "Current SU Factor": [su_factor_c],
+        "New SU Factor": [su_factor_n],
+        "Current Items/Case": [items_case_c],
+        "New Items/Case": [items_case_n],
+        "Total Current Cases": [cases_total_c],
+        "Total New Cases": [cases_total_n],
+        "Total Current Items": [items_total_c],
+        "Total New Items": [items_total_n]
+    }).to_excel(writer, sheet_name="2. Volumes", index=False)
+
+    # Transportation
+    pd.DataFrame({
+        "Transport Modes": [", ".join(transport_modes)],
+        "EU Pallet Type (Current)": [pallet_type_eu_c],
+        "EU Pallet Type (New)": [pallet_type_eu_n],
+        "UK Pallet Type (Current)": [pallet_type_uk_c],
+        "UK Pallet Type (New)": [pallet_type_uk_n],
+        "Cases per Truck EU (Current)": [cases_per_truck_current_eu],
+        "Cases per Truck EU (New)": [cases_per_truck_new_eu],
+        "Cases per Truck UK (Current)": [cases_per_truck_current_uk],
+        "Cases per Truck UK (New)": [cases_per_truck_new_uk],
+        "Sea Cases/Container (Current)": [cases_sea_c if "🚢 Sea" in transport_modes else None],
+        "Sea Cases/Container (New)": [cases_sea_n if "🚢 Sea" in transport_modes else None]
+    }).to_excel(writer, sheet_name="3. Transportation", index=False)
+
+    # Weights
+    pd.DataFrame({
+        "Case Weight (Current)": [case_weight_c],
+        "Case Weight (New)": [case_weight_n],
+        "Truck EU Weight (Current)": [truck_eu_weight_c],
+        "Truck EU Weight (New)": [truck_eu_weight_n],
+        "Truck UK Weight (Current)": [truck_uk_weight_c],
+        "Truck UK Weight (New)": [truck_uk_weight_n]
+    }).to_excel(writer, sheet_name="4. Weights", index=False)
+
+    # Material Savings with conditional formatting
+    if material_data:
+        material_rows = []
+        for material, (current_kg, new_kg) in material_data.items():
+            current_t = current_kg / 1000
+            new_t = new_kg / 1000
+            saving_pct = ((current_kg - new_kg) / current_kg * 100) if current_kg else 0
+            material_rows.append({
+                "Material": material,
+                "Current [t]": round(current_t, 2),
+                "New [t]": round(new_t, 2),
+                "Saving [%]": round(saving_pct, 2)
             })
-        if "🚚 Road" in transport_modes:
-            report_data["Transportation"].update({
-                "Current EU pallet type": pallet_type_eu_c,
-                "Current Cases/Pallet EU": cases_per_truck_current_eu,
-                "New EU pallet type": pallet_type_eu_n,
-                "New Cases/Pallet EU": cases_per_truck_new_eu,
-                "Current UK pallet type": pallet_type_uk_c,
-                "Current Cases/Pallet UK": cases_per_truck_current_uk,
-                "New UK pallet type": pallet_type_uk_n,
-                "New Cases/Pallet UK": cases_per_truck_new_uk
-            })
+        df_mat = pd.DataFrame(material_rows)
+        df_mat.to_excel(writer, sheet_name="5. Material Savings", index=False)
+        ws = writer.sheets["5. Material Savings"]
+        col_letter = chr(65 + df_mat.columns.get_loc("Saving [%]"))
+        rng = f"{col_letter}2:{col_letter}{len(df_mat)+1}"
+        ws.conditional_format(rng, {"type": "cell", "criteria": ">", "value": 0,
+                                    "format": wb.add_format({"bg_color": "#d4edda"})})
+        ws.conditional_format(rng, {"type": "cell", "criteria": "<", "value": 0,
+                                    "format": wb.add_format({"bg_color": "#f8d7da"})})
 
-        # Weight Data
-        report_data["Weight"] = {
-            "Current Case Weight (kg)": case_weight_c,
-            "New Case Weight (kg)": case_weight_n,
-            "Truck EU Weight Current (kg)": truck_eu_weight_c,
-            "Truck EU Weight New (kg)": truck_eu_weight_n,
-            "Truck UK Weight Current (kg)": truck_uk_weight_c,
-            "Truck UK Weight New (kg)": truck_uk_weight_n,
-        }
+    # Road CO2 tables
+    try:
+        df_display.to_excel(writer, sheet_name="Road CO2", index=False)
+        df_savings.to_excel(writer, sheet_name="Road CO2 Savings", index=False)
+        ws2 = writer.sheets["Road CO2 Savings"]
+        for col in ["% Trucks Saved", "% CO2e Saved"]:
+            col_letter = chr(65 + df_savings.columns.get_loc(col))
+            rng = f"{col_letter}2:{col_letter}{len(df_savings)+1}"
+            ws2.conditional_format(rng, {"type": "cell", "criteria": ">", "value": 0,
+                                            "format": wb.add_format({"bg_color": "#d4edda"})})
+            ws2.conditional_format(rng, {"type": "cell", "criteria": "<", "value": 0,
+                                            "format": wb.add_format({"bg_color": "#f8d7da"})})
+    except:
+        pass
 
-        # Material Data
-        material_summary = []
-        for mat, (curr_kg, new_kg) in material_data.items():
-            saving_kg = curr_kg - new_kg
-            saving_pct = ((saving_kg / curr_kg) * 100) if curr_kg else 0
-            material_summary.append({
-                "Material": mat,
-                "Current kg total": curr_kg,
-                "New kg total": new_kg,
-                "Saving kg": saving_kg,
-                "Saving %": saving_pct
-            })
-        df_material = pd.DataFrame(material_summary)
+    # Sea CO2 tables
+    try:
+        edited_df.to_excel(writer, sheet_name="Sea CO2", index=False)
+        savings_df.to_excel(writer, sheet_name="Sea CO2 Savings", index=False)
+        ws3 = writer.sheets["Sea CO2 Savings"]
+        for col in ["Containers Saved [%]", "CO2e Saved [%]"]:
+            col_letter = chr(65 + savings_df.columns.get_loc(col))
+            rng = f"{col_letter}2:{col_letter}{len(savings_df)+1}"
+            ws3.conditional_format(rng, {"type": "cell", "criteria": ">", "value": 0,
+                                            "format": wb.add_format({"bg_color": "#d4edda"})})
+            ws3.conditional_format(rng, {"type": "cell", "criteria": "<", "value": 0,
+                                            "format": wb.add_format({"bg_color": "#f8d7da"})})
+    except:
+        pass
 
-        # Use combined emission data
-        df_combined_report = None
-        df_savings_report = None
-        if su_factor_c and su_factor_n and su_factor_c > 0 and su_factor_n > 0 and 'df_display' in locals():
-            df_combined_report = df_display.copy()
-            df_savings_report = df_savings.copy()
-
-        # Write to Excel in memory buffer
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            pd.DataFrame([report_data["Base Data"]]).to_excel(writer, sheet_name='Base Data', index=False)
-            pd.DataFrame([report_data["Transportation"]]).to_excel(writer, sheet_name='Transportation', index=False)
-            pd.DataFrame([report_data["Weight"]]).to_excel(writer, sheet_name='Weight', index=False)
-
-            df_material.to_excel(writer, sheet_name='Material Savings', index=False)
-
-            if df_combined_report is not None:
-                df_combined_report.to_excel(writer, sheet_name='Emissions Summary', index=False)
-            if df_savings_report is not None:
-                df_savings_report.to_excel(writer, sheet_name='Savings Summary', index=False)
-
-            writer.save()
-        output.seek(0)
-        return output
-
-    # Generate Excel file in memory
-    excel_file = generate_report()
-
-    st.download_button(
-        label="📄 Download Report",
-        data=excel_file,
-        file_name=f"sustainability_calculator_{initiative_name}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        type="primary"
-    )
-except:
-    st.info("Please fill in all inputs above before downloading the results report")
-
-
-
+st.download_button(
+    label="📄 Download Excel Report",
+    data=output.getvalue(),
+    file_name=f"{initiative_name}_sustainability_report.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    on_click=st.balloons 
+)
