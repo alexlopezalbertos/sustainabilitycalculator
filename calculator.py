@@ -644,13 +644,32 @@ try:
         except:
             pass
 
+    # 1. Session flag to track download
+    if "download_done" not in st.session_state:
+        st.session_state.download_done = False
+
+    # 2. Callback function for the button
+    def after_download():
+        st.session_state.download_done = True
+
+    # 3. Download button
     st.download_button(
         label="📄 Download Excel Report",
         data=output.getvalue(),
+        type="primary",
         file_name=f"{initiative_name}_sustainability_report.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        on_click=st.balloons 
+        on_click=after_download
     )
+
+    # 4. Display image **after** download button was used
+    if st.session_state.download_done:
+        with st.container(border=True):
+            st.subheader("📊 Power BI")
+            st.markdown("🔗 Your initiative will be included in the [Sustainability Power BI Dashboard](https://app.powerbi.com/Redirect?action=OpenReport&appId=bec54824-5337-47a7-9863-6222e6422cb1&reportObjectId=342a617e-b487-41bb-9d8f-742b307a5600&ctid=3596192b-fdf5-4e2c-a6fa-acb706c963d8&reportPage=ctid%3D3596192b-fdf5-4e2c-a6fa-acb706c963d8%26experience%3Dpower-bi&pbi_source=appShareLink&portalSessionId=de5690da-1311-46f4-9af3-39941f9b6990)", unsafe_allow_html=True
+)
+            st.image("powerbi.png", caption="Clubhouse PowerBI dashboard example")
+
 except:
     st.info("Please complete the exercise before generating the report")
 
@@ -777,3 +796,4 @@ with st.sidebar:
         if st.session_state.last_help_response:
             with st.chat_message("assistant"):
                 st.markdown(st.session_state.last_help_response)
+    
