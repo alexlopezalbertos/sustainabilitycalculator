@@ -13,7 +13,7 @@ st.set_page_config(
 title_placeholder = st.empty()
 
 # Static default title
-default_title = "♻️ Sustainability Calculator"
+default_title = "Sustainability Calculator"
 
 st.header("Initiative Master Data", divider="red")
 # Inputs
@@ -372,10 +372,13 @@ if "🚚 Road" in transport_modes:
                     ]].copy()
 
                     st.write("")
-                    st.markdown("Use [EcoTransit](https://emissioncalculator.ecotransit.world/) to fill in the **CO2e** values for both **current** and **new**.")
+                    c1, c2 = st.columns([0.8, 0.2])
+                    with c1:
+                        st.info("6️⃣ Use [EcoTransit](https://emissioncalculator.ecotransit.world/) to fill in the **current** and **new** CO2e values.")
 
-                    popover_c = st.popover("ℹ️ Job aid")
-                    popover_c.image("help_aid_co2.png", caption="EcoTransit Tool")
+                    with c2:
+                        popover_c = st.popover("ℹ️ Job aid")
+                        popover_c.image("help_aid_co2.png", caption="EcoTransit Tool")
 
                     df_display = st.data_editor(
                         df_display,
@@ -479,7 +482,13 @@ if "🚢 Sea" in transport_modes:
                 "CO2e New [kg]": [0]
             })
 
-            st.markdown("Use [EcoTransit](https://emissioncalculator.ecotransit.world/) to fill in the **CO2e** values for both **current** and **new**.")
+            c1, c2 = st.columns([0.8, 0.2])
+            with c1:
+                st.info("7️⃣ Use [EcoTransit](https://emissioncalculator.ecotransit.world/) to fill in the **current** and **new** CO2e values.")
+
+            with c2:
+                popover_c = st.popover("ℹ️ Job aid")
+                popover_c.image("help_aid_co2.png", caption="EcoTransit Tool")
             edited_df = st.data_editor(
                 combined_df,
                 column_config={
@@ -644,3 +653,127 @@ try:
     )
 except:
     st.info("Please complete the exercise before generating the report")
+
+with st.sidebar:
+    with st.container(border=True):
+        st.subheader("🧠 Which step do you need help with? (1–7)")
+
+        if "last_help_response" not in st.session_state:
+            st.session_state.last_help_response = None
+
+        user_query = st.chat_input("i.e. Step 1")
+
+        if user_query:
+            query = user_query.lower().strip()
+            step_matches = {
+                "1": "step 1", "one": "step 1",
+                "2": "step 2", "two": "step 2",
+                "3": "step 3", "three": "step 3",
+                "4": "step 4", "four": "step 4",
+                "5": "step 5", "five": "step 5",
+                "6": "step 6", "six": "step 6",
+                "7": "step 7", "seven": "step 7"
+            }
+            step = step_matches.get(query, query)
+
+            if "step 1" in step or "base data" in step:
+                response = (
+                    "🧾 **Step 1: Base Data**\n\n"
+                    "Begin by filling in general information about the initiative:\n"
+                    "- `CM`: Select the Contract Manufacturer\n"
+                    "- `Initiative Name`: Name of the sustainability project\n"
+                    "- `FPC Number Example`: Provide a known FPC for reference\n"
+                    "- `Initiative Description`: Describe the change in 1 sentence\n\n"
+                    "🎯 This configures the core identity of the initiative and shows in the export."
+                )
+            elif "step 2" in step or "volumes" in step:
+                response = (
+                    "📊 **Step 2: Volumes**\n\n"
+                    "Enter key volume-related data:\n"
+                    "- `Total yearly volume` in MSU (thousands of statistical units)\n"
+                    "- `Case SU factor` for Current and New formats\n"
+                    "- `Items per case` for Current and New formats\n\n"
+                    "📌 These values are used to calculate:\n"
+                    "- Total cases per year\n"
+                    "- Total items shipped\n"
+                    "- Inputs for later truck/container and weight calculations"
+                )
+            elif "step 3" in step or "transportation" in step:
+                response = (
+                    "🚚 **Step 3: Transportation**\n\n"
+                    "1. Select transport modes: `🚚 Road` and/or `🚢 Sea`\n\n"
+                    "If **Sea**:\n"
+                    "- Input `cases per container` for Current and New formats\n\n"
+                    "If **Road**:\n"
+                    "- Choose pallet types (B1/B2 for EU, C1/C2 for UK)\n"
+                    "- Input `cases per pallet` to compute `cases per truck`\n\n"
+                    "🧠 Pallet → Truck logic is predefined (e.g., B1 = 66 pallets/truck)"
+                )
+            elif "step 4" in step or "weight" in step:
+                response = (
+                    "⚖️ **Step 4: Weight**\n\n"
+                    "Enter the case weight (kg) for both formats:\n"
+                    "- `Case Weight (Current)`\n"
+                    "- `Case Weight (New)`\n\n"
+                    "📦 Used to calculate:\n"
+                    "- Truck weight (per DC and route)\n"
+                    "- Container weight for Sea lanes\n"
+                    "- Final weight values are shown in tonnes"
+                )
+            elif "step 5" in step or "material" in step:
+                response = (
+                    "📦 **Step 5: Material Data**\n\n"
+                    "Optional input if your initiative changes packaging:\n"
+                    "- Select changed materials: Corrugate, Plastic, Glass, etc.\n"
+                    "- For each selected type:\n"
+                    "   - Enter kg/case for Current and New\n\n"
+                    "📊 Tool shows total tonnes saved and % difference with color indicators\n"
+                    "🔎 Source: `FPP → Bill of Materials → EBOM W&D` tab"
+                )
+            elif "step 6" in step or "road co2" in step:
+                response = (
+                    "🌍 **Step 6: Road CO₂ Emissions**\n\n"
+                    "1. Select DCs and assign MSU per DC\n"
+                    "2. The tool computes:\n"
+                    "   - Cases\n"
+                    "   - Trucks\n"
+                    "   - Weight (tonnes)\n\n"
+                    "3. Open [EcoTransit](https://emissioncalculator.ecotransit.world/):\n"
+                    "   - Use DC lane and weight per lane\n"
+                    "   - Copy **CO₂e [kg]** for Current and New scenarios\n"
+                    "   - Paste into the editable CO₂ table\n\n"
+                    "✅ Output: savings in trucks and CO₂e, with visual formatting"
+                )
+            elif "step 7" in step or "sea co2" in step:
+                response = (
+                    "🚢 **Step 7: Sea CO₂ Emissions**\n\n"
+                    "Based on MSU and `cases/container`, the tool computes:\n"
+                    "- Number of containers (Current and New)\n"
+                    "- Container weight and total sea tonnage\n\n"
+                    "Then:\n"
+                    "1. Use [EcoTransit](https://emissioncalculator.ecotransit.world/) with route + tonnage\n"
+                    "2. Input CO₂e [kg] for Current and New formats\n"
+                    "3. Review containers saved and CO₂e saved as output"
+                )
+            elif "how" in query or "instructions" in query or "guide" in query:
+                response = (
+                    "📘 **Full Tool Usage Guide**\n\n"
+                    "1. **Base Data** – Define initiative and FPC\n"
+                    "2. **Volumes** – Enter yearly MSU and SU factors\n"
+                    "3. **Transportation** – Road or Sea + unit configuration\n"
+                    "4. **Weight** – Case weight input → automated truck/container weight\n"
+                    "5. **Material** – Optional: packaging data per case\n"
+                    "6. **Road CO₂** – EcoTransit per DC, based on trucked weight\n"
+                    "7. **Sea CO₂** – EcoTransit per container, based on MSU shipping"
+                )
+            else:
+                response = (
+                    "🤔 I couldn’t match that to a known step.\n"
+                    "Try typing: `1`, `step 3`, `weight`, `sea CO₂`, or `how do I use the tool?`"
+                )
+
+            st.session_state.last_help_response = response
+
+        if st.session_state.last_help_response:
+            with st.chat_message("assistant"):
+                st.markdown(st.session_state.last_help_response)
