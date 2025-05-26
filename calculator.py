@@ -13,7 +13,7 @@ st.set_page_config(
 title_placeholder = st.empty()
 
 # Static default title
-default_title = "Sustainability Calculator"
+default_title = "♻️ Sustainability Calculator"
 
 st.header("Initiative Master Data", divider="red")
 # Inputs
@@ -25,13 +25,13 @@ with c1:
         "BlueSun", "Carpenter", "Colep", "Dr Schumacher", "Expac", "Farmol Berlingo",
         "Farmol CN & Colep", "Farmol Comun Nuovo", "Hayco China", "Hayco DR", "Kompak",
         "McBride Italy", "McBride Poland", "McBride Spain", "PTG", "Zobele"
-    ), index=None, help=":blue[[SL/MPD]] Introduce the CM name")
+    ), index=None, help=":blue[[SIEL]] Introduce the CM name")
 with c2:
-    initiative_name = st.text_input("Initiative Name", help=":blue[[SL/SIEL]] Introduce the CM name")
+    initiative_name = st.text_input("Initiative Name", help=":blue[[SIEL]] Introduce the CM name")
 with c3:
     fpc = st.text_input("FPC number example", help=":blue[[MPD]] For the current execution, provide an example of any released FPC.")
 
-initiative_description = st.text_input("Describe the initiative in one sentence", help=":blue[[SL/SIEL]]")
+initiative_description = st.text_input("Describe the initiative in one sentence", help=":blue[[SIEL]]")
 
 # Update the title with the initiative name if present
 if initiative_name:
@@ -43,7 +43,7 @@ else:
 st.subheader("2️⃣ Volumes")
 c1, c2 = st.columns(2)
 with c1:
-    yearly_volume = st.number_input("Total yearly volume (MSU)", step=0.01, format="%f", help=":blue[[SL]] Introduce the total forecasted yearly volume in MSU")
+    yearly_volume = st.number_input("Total yearly volume (MSU)", step=0.01, format="%f", help=":blue[[SIEL]] Total forecasted yearly volume in MSU for your :rainbow[highest volume execution]")
 with c2:
     st.write('')
 
@@ -62,7 +62,7 @@ items_total_n = cases_total_n * items_case_n
 
 # ================================================================== 3. TRANSPORTATION ====================================================================================
 st.subheader("3️⃣ Transportation")
-transport_modes = st.multiselect("Select all transportation modes", ["🚚 Road", "🚢 Sea"], help=":blue[[SL/SIEL]] Introduce all transportation modes that apply")
+transport_modes = st.multiselect("Select all transportation modes", ["🚚 Road", "🚢 Sea"], help=":blue[[SIEL]] Introduce all transportation modes that apply")
 
 if "🚢 Sea" in transport_modes:
     c1, c2 = st.columns(2)
@@ -187,12 +187,12 @@ except:
     st.info("Please fill in all inputs above before continuing")
 
 # ======================= 6. MATERIAL SAVINGS TABLE ========================
-on = st.toggle("Show Material Savings")
+on = st.toggle("Show Yearly Material Savings")
 
 if on:
     try:
         if material_data:
-            st.subheader("📊 Material Savings Summary")
+            st.subheader("📊 Material Yearly Savings")
 
             def highlight_savings_cells(val):
                 if isinstance(val, (int, float)):
@@ -207,24 +207,27 @@ if on:
             for material, (current_kg, new_kg) in material_data.items():
                 current_t = current_kg / 1000
                 new_t = new_kg / 1000
+                saving_t = current_t - new_t
                 saving_pct = ((current_kg - new_kg) / current_kg * 100) if current_kg else 0
 
                 rows.append({
                     "Material": material,
                     "Current [t]": round(current_t, 2),
                     "New [t]": round(new_t, 2),
-                    "Saving": round(saving_pct, 2)
+                    "Saving [t]": round(saving_t, 2),
+                    "Saving (%)": round(saving_pct, 2)
                 })
 
             df_all = pd.DataFrame(rows)
 
             styled_df = df_all.style.applymap(
                 highlight_savings_cells,
-                subset=["Saving"]
+                subset=["Saving (%)"]
             ).format({
                 "Current [t]": "{:.2f}",
                 "New [t]": "{:.2f}",
-                "Saving": "{:.2f}%"
+                "Saving [t]": "{:.2f}",
+                "Saving (%)": "{:.2f}%"
             })
 
             st.dataframe(styled_df, use_container_width=True, hide_index=True)
@@ -443,7 +446,7 @@ if "🚚 Road" in transport_modes:
                         "CO2e Saved [%]": "{:.1f}%"
                     })
 
-                    st.subheader("Savings")
+                    st.subheader("Yearly Savings")
                     st.dataframe(styled_df, use_container_width=True, hide_index=True)
             except:
                 st.info("Please fill in all inputs above before continuing")
@@ -528,7 +531,7 @@ if "🚢 Sea" in transport_modes:
                         pass
                 return ''
 
-            st.subheader("Savings")
+            st.subheader("Yearly Savings")
             st.dataframe(
                 savings_df.style.applymap(highlight_percentages, subset=["Containers Saved [%]", "CO2e Saved [%]"]), hide_index=True
             )
@@ -675,7 +678,8 @@ except:
 
 with st.sidebar:
     with st.container(border=True):
-        st.subheader("🧠 Which step do you need help with? (1–7)")
+        st.subheader("🧠 Chatbot Assistant")
+        st.text("Type the step you need help with")
 
         if "last_help_response" not in st.session_state:
             st.session_state.last_help_response = None
@@ -709,7 +713,7 @@ with st.sidebar:
                 response = (
                     "📊 **Step 2: Volumes**\n\n"
                     "Enter key volume-related data:\n"
-                    "- `Total yearly volume` in MSU (thousands of statistical units)\n"
+                    "- `Total yearly volume` in MSU for highest volume execution (i.e. 3CT)\n"
                     "- `Case SU factor` for Current and New formats\n"
                     "- `Items per case` for Current and New formats\n\n"
                     "📌 These values are used to calculate:\n"
@@ -719,7 +723,7 @@ with st.sidebar:
                 )
             elif "step 3" in step or "transportation" in step:
                 response = (
-                    "🚚 **Step 3: Transportation**\n\n"
+                    "🗺️ **Step 3: Transportation**\n\n"
                     "1. Select transport modes: `🚚 Road` and/or `🚢 Sea`\n\n"
                     "If **Sea**:\n"
                     "- Input `cases per container` for Current and New formats\n\n"
@@ -737,41 +741,41 @@ with st.sidebar:
                     "📦 Used to calculate:\n"
                     "- Truck weight (per DC and route)\n"
                     "- Container weight for Sea lanes\n"
-                    "- Final weight values are shown in tonnes"
+                    "Final weight values are shown in tonnes"
                 )
             elif "step 5" in step or "material" in step:
                 response = (
                     "📦 **Step 5: Material Data**\n\n"
-                    "Optional input if your initiative changes packaging:\n"
+                    "Optional input if your initiative changes packaging.\n\n"
+                    "🔎 Source: `FPP → Bill of Materials → EBOM W&D` tab\n"
                     "- Select changed materials: Corrugate, Plastic, Glass, etc.\n"
                     "- For each selected type:\n"
                     "   - Enter kg/case for Current and New\n\n"
                     "📊 Tool shows total tonnes saved and % difference with color indicators\n"
-                    "🔎 Source: `FPP → Bill of Materials → EBOM W&D` tab"
                 )
             elif "step 6" in step or "road co2" in step:
                 response = (
                     "🌍 **Step 6: Road CO₂ Emissions**\n\n"
-                    "1. Select DCs and assign MSU per DC\n"
-                    "2. The tool computes:\n"
-                    "   - Cases\n"
-                    "   - Trucks\n"
-                    "   - Weight (tonnes)\n\n"
-                    "3. Open [EcoTransit](https://emissioncalculator.ecotransit.world/):\n"
-                    "   - Use DC lane and weight per lane\n"
-                    "   - Copy **CO₂e [kg]** for Current and New scenarios\n"
+                    "1. Select all applicable DCs\n"
+                    "2. Assign MSU per DC on the table\n"
+                    "3. The tool computes:\n"
+                    "   - Yearly weight shipped [t] (current and new)\n"
+                    "4. Open [EcoTransit](https://emissioncalculator.ecotransit.world/):\n"
+                    "   - Introduce CM and DC locations\n"
+                    "   - Introduce new and current weights per lane (copy values from table)\n"
+                    "   - Copy **CO₂e [kg]** for Current weight and New weight scenarios\n"
                     "   - Paste into the editable CO₂ table\n\n"
-                    "✅ Output: savings in trucks and CO₂e, with visual formatting"
+                    "✅ Output: savings in trucks and CO₂e"
                 )
             elif "step 7" in step or "sea co2" in step:
                 response = (
                     "🚢 **Step 7: Sea CO₂ Emissions**\n\n"
                     "Based on MSU and `cases/container`, the tool computes:\n"
-                    "- Number of containers (Current and New)\n"
-                    "- Container weight and total sea tonnage\n\n"
+                    "- Number of yearly containers (Current and New)\n"
+                    "- Container weight and total sea yearly tonnage\n\n"
                     "Then:\n"
-                    "1. Use [EcoTransit](https://emissioncalculator.ecotransit.world/) with route + tonnage\n"
-                    "2. Input CO₂e [kg] for Current and New formats\n"
+                    "1. Use [EcoTransit](https://emissioncalculator.ecotransit.world/) with [CM -> DC] route + tonnage\n"
+                    "2. Input CO₂e [kg] for Current weight and New weight formats\n"
                     "3. Review containers saved and CO₂e saved as output"
                 )
             elif "how" in query or "instructions" in query or "guide" in query:
